@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "passwords-decrypter"
+version = "0.1.0"
+description = "Extract passwords from common browsers."
+readme = "README.md"
+authors = [{ name = "Laurent FAVOLE", email = "laurentfavole03@gmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "License :: Public Domain",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+keywords = ["browser", "passwords", "security"]
+dependencies = [
+    "pyaes",
+    'pywin32; sys_platform == "win32"',
+]
+requires-python = ">=3.7"
+
+	[project.optional-dependencies]
+	build = ["build", "twine"]
+	dev = ["black", "bumpver", "flake8", "isort", "pylint"]
+
+	[project.urls]
+	Homepage = "https://github.com/lfavole/passwords-decrypter"
+
+	[project.scripts]
+	passwords-decrypter = "passwords_decrypter.__main__:main"
+
+[tool.black]
+line-length = 120
+extend-exclude = "migrations/"
+
+[tool.isort]
+profile = "black"
+skip = "migrations"
+
+[tool.pylint.main]
+jobs = 0
+disable = [
+    "bad-indentation",
+    "bare-except",
+    "fixme",
+    "global-statement",
+    "import-outside-toplevel",
+    "invalid-str-returned",
+    "line-too-long",
+    "missing-module-docstring",
+    "missing-timeout",
+    "no-member",
+    "protected-access",
+    "unspecified-encoding",
+]
+include-naming-hint = "y"
+
+[tool.pylint.basic]
+allowed-redefined-builtins = ["id", "input"]
+good-names = ["a", "b", "c", "f", "i", "x", "y", "z", "db", "id", "iv", "md", "pk"]
+no-docstring-rgx = "^_|^main$"
