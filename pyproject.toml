@@ -33,6 +33,7 @@ requires-python = ">=3.7"
 
 	[project.scripts]
 	passwords-decrypter = "passwords_decrypter.__main__:main"
+	pwdecr = "passwords_decrypter.__main__:main"
 
 [tool.black]
 line-length = 120
