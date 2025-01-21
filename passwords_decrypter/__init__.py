@@ -219,11 +219,78 @@ def identify_system_locale() -> str:
     return encoding
 
 
-def _real_main() -> None:
+def get_profile_path(path: str | Path):
+    if path in BROWSERS:
+        # Firefox
+        if path == "firefox":
+            if sys.platform in ("cygwin", "win32"):
+                return Path.home() / "AppData/Roaming/Mozilla/Firefox"
+            if sys.platform == "darwin":
+                return Path.home() / "Library/Application Support/Firefox"
+
+            ret = Path.home() / ".mozilla/firefox"
+            if not ret.exists():
+                return Path.home() / "snap/firefox/common/.mozilla/firefox"
+            return ret
+
+        # Thunderbird
+        if path == "thunderbird":
+            if sys.platform in ("cygwin", "win32"):
+                return Path.home() / "AppData/Roaming/Thunderbird"
+            if sys.platform == "darwin":
+                return Path.home() / "Library/Thunderbird"
+
+            ret = Path.home() / ".thunderbird"
+            if not ret.exists():
+                return Path.home() / "snap/firefox/common/.mozilla/thunderbird"
+            return ret
+
+        # Chromium-based
+        if sys.platform in ("cygwin", "win32"):
+            appdata_local = Path.home() / "AppData/Local"
+            appdata_roaming = Path.home() / "AppData/Roaming"
+            return {
+                "brave": appdata_local / "BraveSoftware/Brave-Browser/User Data",
+                "chrome": appdata_local / "Google/Chrome/User Data",
+                "chromium": appdata_local / "Chromium/User Data",
+                "edge": appdata_local / "Microsoft/Edge/User Data",
+                "opera": appdata_roaming / "Opera Software/Opera Stable",
+                "vivaldi": appdata_local / "Vivaldi/User Data",
+            }[path]
+
+        if sys.platform == "darwin":
+            appdata = Path.home() / "Library/Application Support"
+            return {
+                "brave": appdata / "BraveSoftware/Brave-Browser",
+                "chrome": appdata / "Google/Chrome",
+                "chromium": appdata / "Chromium",
+                "edge": appdata / "Microsoft Edge",
+                "opera": appdata / "com.operasoftware.Opera",
+                "vivaldi": appdata / "Vivaldi",
+            }[path]
+
+        config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+        return {
+            "brave": config / "BraveSoftware/Brave-Browser",
+            "chrome": config / "google-chrome",
+            "chromium": config / "chromium",
+            "edge": config / "microsoft-edge",
+            "opera": config / "opera",
+            "vivaldi": config / "vivaldi",
+        }[path]
+
+    path = Path(path)
+    if not path.exists():
+        raise ValueError(f"Incorrect profile name: {path}")
+
+    return path
+
+
+def _real_main(sys_args: list[str] | None = None) -> None:
     """
     Main entry point.
     """
-    sys_args = sys.argv[1:]
+    sys_args = sys_args or sys.argv[1:]
     if hasattr(sys, "frozen") and not sys_args:
         sys_args = shlex.split(input("Arguments: "))
     args = parse_sys_args(sys_args)
@@ -270,59 +337,7 @@ def _real_main() -> None:
         all_passwords = True
 
     for profile_path in all_profiles:
-        if profile_path in BROWSERS:
-            if profile_path == "firefox":
-                if sys.platform in ("cygwin", "win32"):
-                    profile_path = Path.home() / "AppData/Roaming/Mozilla/Firefox"
-                elif sys.platform == "darwin":
-                    profile_path = Path.home() / "Library/Application Support/Firefox"
-                else:
-                    profile_path = Path.home() / ".mozilla/firefox"
-                    if not profile_path.exists():
-                        profile_path = Path.home() / "snap/firefox/common/.mozilla/firefox"
-            elif profile_path == "thunderbird":
-                if sys.platform in ("cygwin", "win32"):
-                    profile_path = Path.home() / "AppData/Roaming/Thunderbird"
-                elif sys.platform == "darwin":
-                    profile_path = Path.home() / "Library/Thunderbird"
-                else:
-                    profile_path = Path.home() / ".thunderbird"
-                    if not profile_path.exists():
-                        profile_path = Path.home() / "snap/firefox/common/.mozilla/thunderbird"
-            else:
-                if sys.platform in ("cygwin", "win32"):
-                    appdata_local = Path.home() / "AppData/Local"
-                    appdata_roaming = Path.home() / "AppData/Roaming"
-                    profile_path = {
-                        "brave": appdata_local / "BraveSoftware/Brave-Browser/User Data",
-                        "chrome": appdata_local / "Google/Chrome/User Data",
-                        "chromium": appdata_local / "Chromium/User Data",
-                        "edge": appdata_local / "Microsoft/Edge/User Data",
-                        "opera": appdata_roaming / "Opera Software/Opera Stable",
-                        "vivaldi": appdata_local / "Vivaldi/User Data",
-                    }[profile_path]
-                elif sys.platform == "darwin":
-                    appdata = Path.home() / "Library/Application Support"
-                    profile_path = {
-                        "brave": appdata / "BraveSoftware/Brave-Browser",
-                        "chrome": appdata / "Google/Chrome",
-                        "chromium": appdata / "Chromium",
-                        "edge": appdata / "Microsoft Edge",
-                        "opera": appdata / "com.operasoftware.Opera",
-                        "vivaldi": appdata / "Vivaldi",
-                    }[profile_path]
-                else:
-                    config = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-                    profile_path = {
-                        "brave": config / "BraveSoftware/Brave-Browser",
-                        "chrome": config / "google-chrome",
-                        "chromium": config / "chromium",
-                        "edge": config / "microsoft-edge",
-                        "opera": config / "opera",
-                        "vivaldi": config / "vivaldi",
-                    }[profile_path]
-        else:
-            profile_path = Path(profile_path)
+        profile_path = get_profile_path(profile_path)
 
         try:
             if any(browser in [part.lower() for part in profile_path.parts] for browser in MOZILLA_BROWSERS):
