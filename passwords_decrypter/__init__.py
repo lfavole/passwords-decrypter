@@ -61,7 +61,7 @@ CHROMIUM_BROWSERS = ["brave", "chrome", "chromium", "edge", "opera", "vivaldi"]
 MOZILLA_BROWSERS = ["firefox", "thunderbird"]
 BROWSERS = CHROMIUM_BROWSERS + MOZILLA_BROWSERS
 
-_OUTPUT_DEFAULT = object()
+_OUTPUT_NO_ARG = object()
 
 
 def parse_sys_args(sys_args: list[str] | None = None) -> argparse.Namespace:
@@ -83,7 +83,7 @@ def parse_sys_args(sys_args: list[str] | None = None) -> argparse.Namespace:
         "-o",
         "--output",
         nargs="?",
-        default=_OUTPUT_DEFAULT,
+        default=_OUTPUT_NO_ARG,
         help="Output file.",
     )
     parser.add_argument(
@@ -368,20 +368,19 @@ def _real_main(sys_args: list[str] | None = None) -> None:
     # Export passwords into one of many formats
     formatter: OutputFormat = args.format(outputs, args)
     output = formatter.output()
-    if args.output is not _OUTPUT_DEFAULT:
+    if args.output is not _OUTPUT_NO_ARG:
         output_file = args.output
         if output_file is None:
-            output_file = "passwords_%(date)s.txt"
+            output_file = "passwords_%(date)s_%(time)s.txt"
+
+        now = dt.datetime.now()
+        output_file = output_file % {
+            "date": now.strftime("%Y%m%d"),
+            "time": now.strftime("%H%M%S"),
+        }
         logger.debug("Writing to file %s", output_file)
-        with open(
-            (
-                output_file
-                % {
-                    "date": dt.datetime.now(),
-                }
-            ).replace(":", "_"),
-            "w",
-        ) as f:
+
+        with open(output_file, "w") as f:
             f.write(output)
 
     print(output)
