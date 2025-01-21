@@ -1,5 +1,10 @@
 # passwords-decrypter
 
+> [!WARNING]
+> This project is outdated.
+>
+> See https://github.com/moonD4rk/HackBrowserData for a more complete and working project.
+
 Extract passwords from Firefox, Thunderbird and Chromium-based browsers.
 
 ## Examples
